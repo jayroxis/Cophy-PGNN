@@ -1,6 +1,6 @@
 # Learning Neural Networks with Competing Physics Objectives: An Application in Quantum Mechanics
 
-This is the supplementary codes for arxiv submission *Learning Neural Networks with Competing Physics Objectives: An Application in Quantum Mechanics*: https://arxiv.org/abs/2007.01420.
+This is the supplementary codes for arxiv paper *Learning Neural Networks with Competing Physics Objectives: An Application in Quantum Mechanics*: https://arxiv.org/abs/2007.01420.
 
 **IMPORTANT NOTE:** 
 Pretrained models and result files have been omitted in this supplementary material submitted to NeurIPS due to the limit on submission size (< 100MB). Particularly the pretrained models and stored variables are too big for gradient analysis, but meanwhile they are essential for gradient analysis to run. A complete project can be found by navigating to the anonymous link: https://osf.io/ps3wx/?view_only=9681ddd5c43e48ed91af0db019bf285a (cophy-pgnn.tar.gz). 
