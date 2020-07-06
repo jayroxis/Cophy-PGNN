@@ -1,0 +1,127 @@
+
+==========================================================================
+Action: initialize task.
+Time: 02-13-2020-12:42:44
+Task Id: -0x143fcb0130e6c834
+
+io_params:
+{
+    "path_out": "../results/",
+    "path_fig": "../figures/",
+    "path_log": "../logs/",
+    "env_path": [],
+    "use_timestamp": true
+}
+data_params:
+{
+    "data_path": "//home/jayroxis/Condensed Matter Theory/datasets/",
+    "phase": "single-phase",
+    "n_sites": "4",
+    "train_size": "2000",
+    "val_size": "2000",
+    "test_size": "0",
+    "normalize_input": "True",
+    "normalize_output": "False",
+    "device": "cuda:5",
+    "dataset": "new"
+}
+nn_params:
+{
+    "hidden_size": "100",
+    "depth": "3",
+    "activation": "<class 'torch.nn.modules.activation.Tanh'>",
+    "device": "cuda:5"
+}
+loss_params:
+{
+    "lambda_s": 0.0,
+    "lambda_e0": 3.68005,
+    "anneal_factor": 0.78622,
+    "anneal_interval": 10,
+    "norm_wf": true,
+    "noise": {},
+    "cyclical": {},
+    "cold_start": {
+        "mode": "sigmoid",
+        "lambda_s": 0.846349,
+        "threshold": 51.0,
+        "smooth": 0.171778
+    }
+}
+train_params:
+{
+    "epochs": "500",
+    "train_loss": "['phy_loss', 'energy_loss']",
+    "test_loss": "['phy_loss', 'energy_loss']",
+    "num_batch": "1",
+    "optimizer": "<class 'torch.optim.adamax.Adamax'>",
+    "cyclical": "{}",
+    "L2_reg": "0.0",
+    "verbose": "False",
+    "print_interval": "10",
+    "early_stopping": "{'patience': 50, 'verbose': False, 'delta': 0}",
+    "break_loop_early": "False"
+}
+
+    Status: Successful
+--------------------------------------------------------------------------
+
+        
+==========================================================================
+Action: load data.
+Time: 02-13-2020-12:42:44
+Task Id: -0x143fcb0130e6c834
+
+Training Inputs:    (2000, 44)
+Training Outputs:   torch.Size([2000, 17])
+Validation Inputs:  (2000, 44)
+Validation Outputs: torch.Size([2000, 17])
+Test Inputs:  (10000, 44)
+Test Outputs: torch.Size([10000, 17])
+
+X Scaler: StandardScaler(copy=True, with_mean=True, with_std=True)
+Y Scaler: None
+Device:   cuda:5
+        Status: Successful
+--------------------------------------------------------------------------
+            
+        
+==========================================================================
+Action: build model.
+Time: 02-13-2020-12:42:44
+Task Id: -0x143fcb0130e6c834
+
+Input Dimension:    44
+Output Dimension:   17
+Model Depth:        3
+Hidden State Width: 100
+
+Activation:  <class 'torch.nn.modules.activation.Tanh'>
+Device:      cuda:5
+
+        Status: Successful
+--------------------------------------------------------------------------
+            
+        
+==========================================================================
+Action: training model.
+Time: 02-13-2020-12:42:45
+Task Id: -0x143fcb0130e6c834
+
+Number of Epochs:   500
+Train Batch Size:   2000
+Test Batch Size:    10000
+Optimizer:          Adamax (
+Parameter Group 0
+    betas: (0.9, 0.999)
+    eps: 1e-08
+    lr: 0.002
+    weight_decay: 0.0
+)
+
+Training Loss:      ['phy_loss', 'energy_loss']
+Test Loss:          ['phy_loss', 'energy_loss']
+
+--------------------------------------------------------------------------
+            
+        
