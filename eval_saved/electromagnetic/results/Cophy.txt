@@ -84,7 +84,7 @@
             'use_timestamp': True
         },
         'data_params': {
-            'data_path': '//home/elhamod/CoPhy-PGNN/CoPhy-PGNN/datasets/electromagnetic_dualphase',
+            'data_path': '//home/elhamod/CoPhy-PGNN/datasets',
             'normalize_input': True,
             'normalize_output': False,
             'device': device(type = 'cuda', index = 7),
