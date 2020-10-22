@@ -1,0 +1,114 @@
+{
+    'name': 'BB',
+    'model_hash': '0x7f00dc5f1c5',
+    'model_path': '../models/0x399c0faca94db3bb.pt',
+    'log_path': '../logs/log_-0x4adbab2a6c766605.txt',
+    'loss_path': '../logs/loss_-0x4adbab2a6c766605.txt',
+    'loss_csv': '../results/losses_-0x4adbab2a6c766605.csv',
+    'mse_all': 0.0097633833065629,
+    'mse_wave_funtion': 0.009132727049291134,
+    'mse_energy': 0.5248921513557434,
+    'wave_function_overlap': 0.7728791236877441,
+    'val_mse_all': 0.0015083309262990952,
+    'val_mse_wave_funtion': 0.0014380926731973886,
+    'val_mse_energy': 0.05933424085378647,
+    'val_wave_function_overlap': 0.9627575278282166,
+    'train_mse_all': 0.001518642995506525,
+    'train_mse_wave_funtion': 0.0014308105455711484,
+    'train_mse_energy': 0.07346871495246887,
+    'train_wave_function_overlap': 0.9627575278282166,
+    'param_hash': '0x3d8081b6e9d23175',
+    'params': {
+        'name': 'BB',
+        'nn_params': {
+            'hidden_size': 100,
+            'depth': 3,
+            'activation':  < class 'torch.nn.modules.activation.Tanh' > ,
+            'device': device(type = 'cuda', index = 7),
+            'in_dim': 10,
+            'out_dim': 804
+        },
+        'train_params': {
+            'epochs': 2000,
+            'train_loss': ['mse_loss', 'phy_loss', 'energy_loss'],
+            'test_loss': ['phy_loss', 'energy_loss'],
+            'num_batch': 1,
+            'optimizer':  < class 'torch.optim.adamax.Adamax' > ,
+            'cyclical': {},
+            'L2_reg': 0.0,
+            'verbose': False,
+            'print_interval': 10,
+            'early_stopping': {
+                'patience': 50,
+                'verbose': False,
+                'delta': 0,
+                'saved_model': '../models/-0x4adbab2a6c766605.pt'
+            },
+            'vanilla': False,
+            'break_loop_early': True,
+            'loss': {
+                'lambda_s': 8e-12,
+                'lambda_e0': 0.01,
+                'anneal_factor': 0.5,
+                'anneal_interval': 10,
+                'norm_wf': True,
+                'noise': {},
+                'cyclical': {},
+                'cold_start': {
+                    'mode': 'sigmoid',
+                    'lambda_s': 8e-09,
+                    'threshold': 200.0,
+                    'smooth': 0.171778
+                },
+                'train_loss': ['mse_loss', 'phy_loss', 'energy_loss'],
+                'test_loss': ['phy_loss', 'energy_loss']
+            },
+            'data':  < data_loader.DatasetLoader object at 0x7effbb11a470 > ,
+            'model': DNN(
+                (layers): Sequential(
+                    (input): Linear(in_features = 10, out_features = 100, bias = True)
+                    (input_activation): Tanh()
+                    (hidden_0): Linear(in_features = 100, out_features = 100, bias = True)
+                    (activation_0): Tanh()
+                    (hidden_1): Linear(in_features = 100, out_features = 100, bias = True)
+                    (activation_1): Tanh()
+                    (hidden_2): Linear(in_features = 100, out_features = 100, bias = True)
+                    (activation_2): Tanh()
+                    (output): Linear(in_features = 100, out_features = 804, bias = True)))
+        },
+        'io_params': {
+            'path_out': '../results/',
+            'path_fig': '../figures/',
+            'path_log': '../logs/',
+            'env_path': [],
+            'use_timestamp': True
+        },
+        'data_params': {
+            'data_path': '//home/elhamod/CoPhy-PGNN/datasets',
+            'normalize_input': True,
+            'normalize_output': False,
+            'device': device(type = 'cuda', index = 7),
+            'train_size': '2000examples_400x400complex.mat'
+        },
+        'loss_params': {
+            'lambda_s': 8e-12,
+            'lambda_e0': 0.01,
+            'anneal_factor': 0.5,
+            'anneal_interval': 10,
+            'norm_wf': True,
+            'noise': {},
+            'cyclical': {},
+            'cold_start': {
+                'mode': 'sigmoid',
+                'lambda_s': 8e-09,
+                'threshold': 200.0,
+                'smooth': 0.171778
+            },
+            'train_loss': ['mse_loss', 'phy_loss', 'energy_loss'],
+            'test_loss': ['phy_loss', 'energy_loss']
+        }
+    },
+    'epoch': 189,
+    'train_time': 699.6112072467804,
+    'time_per_epoch': 3.682164248667265
+}

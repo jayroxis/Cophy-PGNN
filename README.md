@@ -5,6 +5,7 @@ This is the supplementary codes for arxiv paper *Learning Neural Networks with C
 **IMPORTANT NOTE:** 
 Pretrained models and result files have been omitted in this repository due to the space limits of Github. Particularly the pretrained models and stored variables are too big for gradient analysis, but meanwhile they are essential for gradient analysis to run. A complete project can be found by navigating to the anonymous link: https://osf.io/ps3wx/?view_only=9681ddd5c43e48ed91af0db019bf285a (cophy-pgnn.tar.gz). 
 However, you can still be able to inspect the code and notebooks where we have the results displayed. Since the dataset is included, you are also able to run the experiments and generate new results for evaluations.
+For the electromagnetic propagation experiment, the dataset is too large to include in Github. We have placed it in: https://drive.google.com/file/d/1OYQS8dwAFuDW6DcjWmrXCGQAtp8DFZTg/view?usp=sharing. Extract it to the datasets directory.
 
 ---------------------------------------------------------------
 The project is written in *Python* and algorithms are implemented using *PyTorch*.
@@ -66,6 +67,7 @@ Please install the following dependencies
 - *jupyterlab*: `pip install jupyterlab`
 - *progressbar*: `pip install progressbar`
 - *loss-landscapes*: `pip install loss-landscapes`
+- *h5py*: `pip install h5py`
 
 -----------------------------------------------------------------
 

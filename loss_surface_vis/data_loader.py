@@ -1,4 +1,3 @@
-
 import torch
 import numpy as np
 from torch.autograd import Variable
@@ -404,4 +403,4 @@ class DatasetLoader(object):
                 replace=False
             )
             self.X_test = self.test_X[self.test_index]
-            self.y_test = self.test_y[self.test_index]  
+            self.y_test = self.test_y[self.test_index] 
