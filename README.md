@@ -75,16 +75,16 @@ We create a naming system that can encode the settings of a model into its alias
 Here is a table of model information including their alias used in the codes:
 
 |          Models          	|     Alias    	| Training 	| Training 	| Training 	|   Test  	|  Test  	| Adaptive  |
-|:------------------------:	|:------------:	|:--------:	|:--------:	|:--------:	|:------:	|:------:	|:------:	|
-|          Names          	|     Abbr.    	|    MSE   	|  S-Loss  	|  E-Loss  	| S-Loss 	| E-Loss 	|  Lambda	|
-| *CoPhy*-PGNN   	        | cNSE-NNex    	|     +    	|     +    	|     +    	|    +   	|    +   	| c.s. & a. |
-| Black-box Neural Network  | NN            |     +    	|     -    	|     -    	|    -   	|    -   	|     -     |
-| PINN-*analogue*      	    | NSE-NNex-LF 	|     -    	|     +    	|     +    	|    +   	|    +   	|     -     |
-| PGNN-*analogue*   	    | NSE-NNex    	|     +    	|     +    	|     +    	|    +   	|    +   	|     -     |
-| *MTL*-PGNN     	        | vNSE-NNex     |     +    	|     +    	|     +    	|    +   	|    +   	|    alt.   |
-| *CoPhy*-PGNN (only-D_Tr)  | cNSE-NN       |     +    	|     +    	|     +    	|    -   	|    -   	| c.s. & a. |
-| *CoPhy*-PGNN (w/o E-Loss) | cNS-NNex     	|     +    	|     +    	|     -    	|    +   	|    -   	| c.s. & a. |
-| *CoPhy*-PGNN (Label-free) | cNSE-NNex-LF  |     -    	|     +    	|     +    	|    +   	|    +   	| c.s. & a. |
+|:------------------------:	|:------------:	|:--------:	|:--------:	|:--------:	|:------:	  |:------:	|:------:	  |
+|          Names          	|     Abbr.    	|    MSE   	|  C-Loss  	|  S-Loss  	| C-Loss 	  | S-Loss 	|  Lambda	  |
+| *CoPhy*-PGNN   	          | cNSE-NNex    	|     +    	|     +    	|     +    	|    +   	  |    +   	| c.s. & a. |
+| Black-box Neural Network  | NN            |     +    	|     -    	|     -    	|    -   	  |    -   	|     -     |
+| PINN-*analogue*      	    | NSE-NNex-LF 	|     -    	|     +    	|     +    	|    +   	  |    +   	|     -     |
+| PGNN-*analogue*   	      | NSE-NNex    	|     +    	|     +    	|     +    	|    +   	  |    +   	|     -     |
+| *MTL*-PGNN     	          | vNSE-NNex     |     +    	|     +    	|     +    	|    +   	  |    +   	|    alt.   |
+| *CoPhy*-PGNN (only-D_Tr)  | cNSE-NN       |     +    	|     +    	|     +    	|    -   	  |    -   	| c.s. & a. |
+| *CoPhy*-PGNN (w/o E-Loss) | cNS-NNex     	|     +    	|     +    	|     -    	|    +   	  |    -   	| c.s. & a. |
+| *CoPhy*-PGNN (Label-free) | cNSE-NNex-LF  |     -    	|     +    	|     +    	|    +   	  |    +   	| c.s. & a. |
 
 '+': presence, '-': absence, 'c.s. & a.': cold-start and annealing, 'alt.': alternating. 
 
