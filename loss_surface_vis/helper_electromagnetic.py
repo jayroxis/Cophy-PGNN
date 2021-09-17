@@ -1,20 +1,91 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
-from scipy import interp
 import pandas as pd
+import torch.nn.functional as f
 
-def getFriendlyName(DNN_type):
-    name = "NN"
-    if DNN_type == "PGNN_":
-        name = r'\emph{CoPhy}-PGNN'
-    return name
+import sys
+import os
+sys.path.append(os.path.abspath('../loss_surface_vis'))
+sys.path.append(os.path.abspath('../scripts'))
+from loss_functions_electromagnetic import multiply_Eg_C
 
-def getBxVsCosineSimilarity(Bx, prediction, target):
+# Calculates | HC - EC |/ |HC|
+def getEigError(eigenVector, eigenval, H):
+    eigenVector_shape_half = int(eigenVector.shape[1]/2)
+    batchC = eigenVector.view(-1, eigenVector.shape[1], 1)
+    batchEg = eigenval.view(-1, 2, 1)
+    HC = torch.matmul(H, batchC)
+    EC = multiply_Eg_C(batchEg, batchC)
+    EC = multiply_Eg_C(batchEg, EC) 
+    EC = EC*2*2
+    EC = EC*(torch.tensor(np.pi))
+    EC = EC*(torch.tensor(np.pi))# This assumes lam0=1
+    Total = (HC - EC)**2
+    loss_phy = torch.sqrt(torch.sum(Total, dim=1))
+    loss_phy /= torch.sqrt(torch.sum(HC ** 2, dim=1))
+    
+    return loss_phy
+
+def getCosSimMeasure(prediction, target):
+    return torch.nn.CosineSimilarity()(prediction, target)
+
+def getMSE(prediction, target):
+    # scale the vectors so that the first element of both is equal
+    scale = torch.div(prediction[:, 0], target[:, 0]).view(prediction.shape[0], -1)
+    prediction_v = torch.div(prediction, scale)
+
+    # Calculate error
+    num_of_examples = target.shape[0]
+    error=torch.zeros(num_of_examples)
+    for i in range(num_of_examples):
+        error[i] = torch.nn.MSELoss()(prediction_v[i, :], target[i, :])
+    return error
+
+def getOverlapIntegral(prediction, target, useRealComp=False):
+    # Convert to numpy complex format
+    shape_half = int(target.shape[1]/2)
+    prediction2 = prediction[:,:shape_half].cpu().detach().numpy() + 1j * prediction[:,shape_half:].cpu().detach().numpy()
+    target2 = target[:,:shape_half].cpu().detach().numpy() + 1j * target[:,shape_half:].cpu().detach().numpy()
+    
+    # Calculate error
+    num_of_examples = prediction2.shape[0]
+    error=torch.zeros(num_of_examples)
+    for i in range(num_of_examples):
+        error1 = np.vdot(prediction2[i, :], target2[i, :]) # vdot takes care of conjugating automatically.
+        if useRealComp:
+            error1 = np.real(error1)
+        else: 
+            error1 = np.absolute(error1)
+        error[i] = torch.tensor(error1)
+    return error
+
+
+def getBxVsCosineSimilarity(Bx, batchInput, prediction, target, measure="Cos"):
     numOfSamples = prediction.shape[0]
     error_per_sample = torch.zeros(numOfSamples, 1)
+    
+    # Normalize vectors
+    prediction_v = prediction[:, :-2]
+    prediction_v = f.normalize(prediction_v, p=2, dim=-1)
+    target_v = target[:, :-2]
+    target_v = f.normalize(target_v, p=2, dim=-1)
 
-    error = torch.nn.CosineSimilarity()(prediction, target)
+    if measure=="Cos":
+        error = getCosSimMeasure(prediction_v, target_v)
+    elif measure=="OverInt":
+        error = getOverlapIntegral(prediction_v, target_v)
+    elif measure=="OverIntRealVal":
+        error = getOverlapIntegral(prediction_v, target_v, True)
+    elif measure=="MSE":
+        error = getMSE(prediction_v, target_v)
+    elif measure=="EigenError":
+        error = getEigError(prediction_v, prediction[:, -2:], batchInput).view(-1)
+    elif measure=="EigenError2":
+        error = getEigError(prediction_v, target[:, -2:], batchInput).view(-1)
+    else:
+        raise
+    
     error_per_sample[:, 0] = error
 
     Bx_inds = torch.argsort(Bx, dim=0)
@@ -62,6 +133,8 @@ class PlotHelper():
         legend = legend.replace('BB', 'NN')
         if legend == 'CoPhy':
             legend = r'\emph{CoPhy}-PGNN'
+        if legend == 'Analogue':
+            legend = r'PGNN-\emph{analogue}'
         
         y_np = np.asarray(y)
         std_np = np.asarray(std)
@@ -71,4 +144,4 @@ class PlotHelper():
         self.showLegend()
         
     def showLegend(self):
-        self.ax.legend(loc='center right')
+        self.ax.legend(loc='upper right')

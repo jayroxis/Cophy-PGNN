@@ -58,6 +58,15 @@ from early_stopping import EarlyStopping
 # parameters
 from parameters import Params
 
+import sys
+import os
+sys.path.append(os.path.abspath('../loss_surface_vis'))
+from helper_electromagnetic import getMSE, getOverlapIntegral, getEigError
+import random
+import torch.nn.functional as f
+
+import pandas as pd
+
 # ========================= The Trainer Class =========================
 class Trainer(object):
     def __init__(self, master_bar=None, plot=True):
@@ -226,10 +235,11 @@ Device:   %s
         depth = nn_param['depth']
         h = nn_param['hidden_size']
         activation = nn_param['activation']
+        softmax = nn_param['softmax']
         device = nn_param['device']
         
         # parallelize if possible
-        model = DNN(d_in, h, d_out, depth, act=activation)
+        model = DNN(d_in, h, d_out, depth, act=activation, softmax=softmax)
 #         if torch.cuda.is_available():
 #             if torch.cuda.device_count() > 4:
 #                 model = torch.nn.DataParallel(model)
@@ -279,6 +289,9 @@ Device:      %s
         return model
     
     def train(self, train_param, verbose=False):
+        df_measures = pd.DataFrame()
+        df_examples = pd.DataFrame()
+
         # unpack
         model = train_param['model']
         data = train_param['data']
@@ -322,15 +335,19 @@ Device:      %s
         # Optimizer
         optimizer = train_param['optimizer'](
             model.parameters(), 
+            lr=train_param['lr'],
             weight_decay=train_param['L2_reg']
         )
         
         # cyclical scheduler
+        scheduler = None
         if train_param['cyclical']:
             scheduler = torch.optim.lr_scheduler.CyclicLR(optimizer, **train_param['cyclical'])
+        else:
+            scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=train_param['steplr'], gamma=train_param['gamma'])
         
         # MSE Loss
-        criterion = torch.nn.MSELoss()
+        criterion = lambda x, y: torch.mean(overlap_squared_loss(f.normalize(x[:, :-2], p=2, dim=1), f.normalize(y[:, :-2], p=2, dim=1)) +  torch.nn.MSELoss()(x[:, -2:], y[:, -2:]))
         
         # path to save model
         path_to_model = '../models/%s.pt' % self.current_hash
@@ -436,7 +453,6 @@ Test Loss:          %s
         # the progress bar
         if self.master_bar is not None:
             child_bar = progress_bar(range(NUMEPOCHS), parent=self.master_bar)
-            self.master_bar.names = ['C_loss*C_coeff', 'C_loss', 'S_loss*s_coeff', 'S_loss', 'L1_loss']
         else:
             child_bar = range(NUMEPOCHS)
 
@@ -495,6 +511,7 @@ Test Loss:          %s
                         batchY=batchY,
                         batchH=batchH,
                         norm=loss_param['norm_wf'],
+                        HC=loss_param['HC'] if 'HC' in loss_param else False,
                         vanilla=vanilla,
                         true_output = batchY
                     )[0]
@@ -502,10 +519,7 @@ Test Loss:          %s
                     # Backward and optimize
                     optimizer.zero_grad()
                     loss.backward()
-                    if train_param['cyclical']:
-                        scheduler.step()
-                    else:
-                        optimizer.step()
+                    optimizer.step()
                     
             if train_param['test_loss'] != []:
                 for batchX, batchY, batchH in data_test_loader:
@@ -549,16 +563,14 @@ Test Loss:          %s
                         batchY=None,
                         batchH=batchH,
                         norm=loss_param['norm_wf'],
+                        HC=loss_param['HC'] if 'HC' in loss_param else False,
                         true_output = batchY
                     )[0]
 
                     # Backward and optimize
                     optimizer.zero_grad()
                     loss.backward()
-                    if train_param['cyclical']:
-                        scheduler.step()
-                    else:
-                        optimizer.step()
+                    optimizer.step()
             
             end_time = time.time()     # end recording time
             train_time += end_time - start_time   # accumulate training time
@@ -586,6 +598,7 @@ Test Loss:          %s
                 batchX = batchX.cuda()
                 batchH = batchH.cuda()
                 batchY = batchY.cuda()
+                outputs=model(batchX).cuda()
 
                 (loss__, 
                 phy_losses__, 
@@ -593,13 +606,14 @@ Test Loss:          %s
                 e_losses__) = self.loss_func(
                     data,
                     train_param['train_loss'],
-                    outputs=model(batchX).cuda(),
+                    outputs=outputs,
                     e_coff=e_coff,
                     s_coff=s_coff,
                     batchX=batchX, 
                     batchY=batchY,
                     batchH=batchH,
                     norm=loss_param['norm_wf'],
+                    HC=loss_param['HC'] if 'HC' in loss_param else False,
                     true_output = batchY
                 )
 
@@ -623,6 +637,7 @@ Test Loss:          %s
                 batchX = batchX.cuda()
                 batchH = batchH.cuda()
                 batchY = batchY.cuda()
+                outputs=model(batchX).cuda()
 
                 (loss__, 
                 phy_losses__, 
@@ -630,13 +645,14 @@ Test Loss:          %s
                 e_losses__) = self.loss_func(
                     data, 
                     [], 
-                    outputs=model(batchX).cuda(),
+                    outputs=outputs,
                     e_coff=e_coff,
                     s_coff=s_coff,
                     batchX=batchX, 
                     batchY=batchY,
                     batchH=batchH,
                     norm=loss_param['norm_wf'],
+                    HC=loss_param['HC'] if 'HC' in loss_param else False,
                     true_output = batchY
                 )
 
@@ -656,10 +672,23 @@ Test Loss:          %s
             phy_losses_ = []
             norm_phy_losses_ = []
             e_losses_ = []
+            outputs_test = None
+            true_test = None
+            H_test = None
             for batchX, batchY, batchH in data_test_loader:
                 batchX = batchX.cuda()
                 batchH = batchH.cuda()
                 batchY = batchY.cuda()
+                outputs=model(batchX).cuda()
+                
+                if outputs_test is None:
+                    outputs_test = outputs
+                    true_test = batchY
+                    H_test = batchH
+                else:
+                    outputs_test = torch.cat((outputs_test, outputs))
+                    true_test = torch.cat((true_test, batchY))
+                    H_test = torch.cat((H_test, batchH))
                 
                 (loss__, 
                 phy_losses__, 
@@ -667,13 +696,14 @@ Test Loss:          %s
                 e_losses__) = self.loss_func(
                     data, 
                     train_param['test_loss'],
-                    outputs=model(batchX).cuda(),
+                    outputs=outputs,
                     e_coff=e_coff,
                     s_coff=s_coff,
                     batchX=batchX, 
                     batchY=batchY,
                     batchH=batchH,
                     norm=loss_param['norm_wf'],
+                    HC=loss_param['HC'] if 'HC' in loss_param else False,
                     true_output = batchY
                 )
 
@@ -710,21 +740,70 @@ Test Loss:          %s
             
             # plot loss curve
             if epoch % 1 == 0 and self.master_bar is not None and self.plot_flag:
-                y_upper_bound = max(val_losses)
-                x_axis = np.arange(epoch+1) + 1
+                # graph components
+                example_index = random.randrange(outputs_test.shape[0])
+                x_len=outputs_test.shape[1]-2
+                x_axis = np.arange(x_len)
+                
+                output_example = outputs_test[example_index, :-2].detach().cpu().numpy()
+                true_example = true_test[example_index, :-2].detach().cpu().numpy()
+                output_example = output_example / np.linalg.norm(output_example)
+                true_example = true_example / np.linalg.norm(true_example)
+                
+                true_test_eigen_vals = true_test[:, -2:]
+                output_test_vector_normalized = f.normalize(outputs_test[:, :-2], p=2, dim=1) 
+                true_test_vector_normalized = f.normalize(true_test[:, :-2], p=2, dim=1) 
+                
+                y_upper_bound = max(torch.cat((output_test_vector_normalized[example_index, :-2], true_test_vector_normalized[example_index, :-2])))
+                
+                graphs = [[x_axis, output_example], [x_axis, true_example]]
+                x_bounds = [0, x_len]
+                y_bounds = [0.0, y_upper_bound.item()]
 
-                graphs = [[x_axis, s_coff*val_norm_phy_losses[:epoch+1]], 
-                [x_axis, val_norm_phy_losses[:epoch+1]],
-                [x_axis, e_coff*val_e_losses[:epoch+1]], 
-                [x_axis, val_e_losses[:epoch+1]], 
-                [x_axis, val_losses[:epoch+1]]
-                [x_axis, s_coeffs[:epoch+1]],
-                [x_axis, e_coeffs[:epoch+1]]]
-
-                x_bounds = [0, NUMEPOCHS]
-                y_bounds = [0.0, y_upper_bound]
+                mse_error = getMSE(outputs_test[:, :-2], true_test[:, :-2])
+                overlap_error = getOverlapIntegral(output_test_vector_normalized, true_test_vector_normalized)
+                eigen_equation_error = getEigError(output_test_vector_normalized, true_test_eigen_vals, H_test)
+                lr_ = optimizer.param_groups[0]['lr']
+                overlap_loss_val = overlap_squared_loss(f.normalize(model(data.X_val_tensor.cuda()).cuda(), p=2, dim=1), f.normalize(data.y_val_tensor.cuda(), p=2, dim=1))
+                overlap_loss_val = (sum(overlap_loss_val)/data.X_val_tensor.shape[0]).detach().cpu().numpy()
                 self.master_bar.update_graph(graphs, x_bounds, y_bounds)
             
+                # save stuff to pandas
+                dict_ = {'epoch':epoch,
+                         
+                        'mse/overlap val':[(val_losses[epoch])],
+                        'lambdaC val':[(s_coff)],
+                        'lambdaC*Closs val':[(s_coff*val_norm_phy_losses[epoch])],
+                        'Closs val': [(val_norm_phy_losses[epoch])],
+                        'lambdaS val': [(e_coff)],
+                        'lambdaS*Sloss val': (e_coff*val_e_losses[epoch]),
+                        'Sloss val': (val_e_losses[epoch]),
+                        'overlap loss val': overlap_loss_val,
+                         
+                        'MSE test': (sum(mse_error)/outputs_test.shape[0]).detach().cpu().numpy(),
+                        'overlapInt test': (sum(overlap_error)/outputs_test.shape[0]).detach().cpu().numpy(),
+                        'EigenError relative test': (sum(eigen_equation_error)/outputs_test.shape[0]).detach().cpu().numpy(),
+                        
+                         'lr': optimizer.param_groups[0]['lr']
+                       }
+  
+                df2 = pd.DataFrame(dict_)
+                df_measures = pd.concat([df_measures, df2], ignore_index = True)
+                df_measures.reset_index()
+                path_to_df_measures = '../models/%s_measures.csv' % self.current_hash
+                df_measures.to_csv(path_to_df_measures)
+            
+                # add first example
+                output_example = outputs_test[0, :-2].detach().cpu().numpy()
+                true_example = true_test[0, :-2].detach().cpu().numpy()
+                output_example = output_example / np.linalg.norm(output_example)
+                true_example = true_example / np.linalg.norm(true_example)
+                vectors_side_by_side = np.concatenate((output_example, true_example))
+                df3 = pd.DataFrame([vectors_side_by_side], index=[epoch])
+                df_examples = pd.concat([df_examples, df3], ignore_index = False)
+                path_to_df_examples = '../models/%s_examples.csv' % self.current_hash
+                df_examples.to_csv(path_to_df_examples)
+                
             # early stopping
             if train_param['early_stopping']:
                 early_stopping(val_losses[epoch], model)
@@ -737,6 +816,9 @@ Test Loss:          %s
                     else:
                         break
         
+            if train_param['cyclical'] or (scheduler is not None):
+                scheduler.step()
+                    
         # record when training stopped and calculate time           
         time_per_epoch = train_time / (epoch+1)
         
@@ -799,18 +881,17 @@ Test Loss:          %s
             if time:
                 return datetime.now().strftime("%H:%M:%S")
     
-    def loss_func(self, data, loss_list, outputs, e_coff=0.0, s_coff=1.0, batchX=None, batchY=None, batchH=None, norm=False, vanilla=False, true_output=None):
+    def loss_func(self, data, loss_list, outputs, e_coff=0.0, s_coff=1.0, batchX=None, batchY=None, batchH=None, norm=False, vanilla=False, true_output=None, HC=False):
         """ 
         Set batchY to None when train on test set. 
         Set batchX to None when only use MSE.
         """
         # MSE Loss
-        criterion = torch.nn.MSELoss(reduction='sum') # Empirically works better
-        # criterion = torch.nn.L1Loss(reduction='mean')
+        criterion = torch.nn.MSELoss(reduction='mean')
+
         if (batchY is not None) and ('mse_loss' in loss_list):
             loss = criterion(outputs[:, :-2], batchY[:, :-2]) 
             loss = loss + criterion(outputs[:, -2:], batchY[:, -2:]) 
-            loss = loss + criterion(torch.norm(outputs[:, -2:], dim=1), torch.norm(batchY[:, -2:], dim=1))
         else:
             loss = 0.0
             
@@ -836,16 +917,31 @@ Test Loss:          %s
             origin_output = outputs
             origin_y = batchY
 
-        # physics loss and energy loss
+        # physics loss and energy loss            
         if 'phy_loss' in loss_list:
             loss_phy = phy_loss(
                 origin_output,
                 true_output,
                 origin_input,
-                norm=norm
+                norm=norm,
+                HC_enabled=HC
             )
         else:
             loss_phy = 0.0
+        
+        if 'overlap_loss' in loss_list:
+            overlap_loss = overlap_squared_loss(
+                torch.nn.functional.normalize(origin_output, p=2.0, dim=1),
+                torch.nn.functional.normalize(batchY, p=2.0, dim=1)
+            )
+        else:
+            overlap_loss = 0.0
+        if (batchY is not None) and ('overlap_loss' in loss_list):
+            loss += torch.mean(overlap_loss)
+            loss = loss + criterion(outputs[:, -2:], batchY[:, -2:]) 
+        else:
+            loss = 0.0
+            
             
         if 'energy_loss' in loss_list:
             loss_e = energy_loss(
@@ -875,14 +971,16 @@ Test Loss:          %s
             origin_output,
             true_output,
             origin_input,
-            norm=True
+            norm=True,
+            HC_enabled=HC
         )
         norm_loss_phy = torch.mean(norm_loss_phy).item()
         loss_phy = phy_loss(
             origin_output,
             true_output,
             origin_input,
-            norm=False
+            norm=False,
+            HC_enabled=HC
         )
         loss_phy = torch.mean(loss_phy).item()
         loss_e = energy_loss(

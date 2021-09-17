@@ -17,7 +17,7 @@ def getBxVsCosineSimilarity(Bx, prediction, target):
     numOfSamples = prediction.shape[0]
     error_per_sample = torch.zeros(numOfSamples, 1)
 
-    error = torch.nn.CosineSimilarity()(prediction, target)
+    error = torch.nn.CosineSimilarity()(prediction[:, :-1], target[:, :-1])
     error_per_sample[:, 0] = error
 
     Bx_inds = torch.argsort(Bx, dim=0)

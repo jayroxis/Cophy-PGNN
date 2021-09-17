@@ -1,6 +1,6 @@
-,avg time,avg L1 error
-cophy-pgnn_cuda,0.0372990220238877,187.85583044771764
-numpy_eig,31.221106569802277,7.714402869361634e-06
-torch_cuda,13.891260997909825,6.821138708253749e-13
-scipy_eig,29.998622392582934,0.0007538649208909414
-scipy_sparse_eig,0.9563353273832267,0.004418412524066934
+,avg time,avg eigen error,overlap_int
+cophy-pgnn_cuda./home/elhamod/projects/jiesRepo/Cophy-PGNN/eval_saved/electromagnetic/models/-0x544ff2c934fa5926.pt,0.041552328045439464,0.7205024598560105,0.57984614
+cophy-pgnn_cuda./home/elhamod/projects/jiesRepo/Cophy-PGNN/eval_saved/electromagnetic/models/0x49583cf87637eb8.pt,0.032158022060694104,0.130894014017341,0.64542496
+cophy-pgnn_cuda./home/elhamod/projects/jiesRepo/Cophy-PGNN/eval_saved/electromagnetic/models/0x575808717bbd1e5b.pt,0.030694387680962297,1.9800610823498317,0.6163179
+numpy_eig,35.81988903756006,1.4659400995947112e-07,0.99999917
+scipy_eig,33.70724565067505,2.620191686062954e-05,0.9822114
