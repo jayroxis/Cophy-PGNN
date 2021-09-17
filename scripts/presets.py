@@ -61,6 +61,36 @@ class LambdaSearch(object):
         param.train_params['test_loss'] = []
         return param
     
+    def DNN_overlap(self, patience=50, anneal=(0.5, 1.0), lambda_e0=(0.0, 5.0), lambda_s=(0.0, 10.0)):
+        
+        """ The baseline blackbox DNN. """
+        
+        param = Params()
+        param.data_params['data_path'] = self.data_path
+
+        # set patience to 500 to give best potential to all models when doing hyper-parameter search
+        param.train_params['early_stopping'] = {'patience':patience, 'verbose':False, 'delta':0}
+        param.train_params['cyclical'] = {}    # cyclical learning rate
+
+        # coefficient for energy loss and shrodinger loss
+        param.loss_params['anneal_interval'] = 10
+        param.loss_params['anneal_factor'] = np.random.uniform(low=anneal[0], high=anneal[1])
+        param.loss_params['lambda_e0'] = np.random.uniform(low=lambda_e0[0], high=lambda_e0[1])
+        param.loss_params['lambda_s'] = np.random.uniform(low=lambda_s[0], high=lambda_s[1])
+        
+        # for coefficient of the shrodinger loss
+        param.loss_params['noise'] = {}       # noisy coefficient
+        param.loss_params['cyclical'] = {}    # cyclical coefficient
+
+        # loss function for NSE-DNNex-LB (label free)
+        param.loss_params['norm_wf'] = False
+        param.train_params['train_loss'] = [
+            'overlap_loss',
+        ]
+        param.train_params['test_loss'] = []
+        return param
+    
+    
     def S_DNN(self, patience=50, anneal=(0.5, 1.0), lambda_e0=(0.0, 5.0), lambda_s=(0.0, 10.0)):
         
         """ Only Shrodinger loss and only on training set. """
@@ -279,6 +309,40 @@ class LambdaSearch(object):
             'phy_loss', 
             'energy_loss'
         ]
+        param.train_params['test_loss'] = [
+            'phy_loss', 
+            'energy_loss'
+        ]
+        return param
+    
+    def NSE_DNNex_overlap(self, patience=50, anneal=(0.5, 1.0), lambda_e0=(0.0, 5.0), lambda_s=(0.0, 10.0), mse=False):
+        
+        """ Normalized version. """
+        param = Params()
+        param.data_params['data_path'] = self.data_path
+
+        # set patience to 500 to give best potential to all models when doing hyper-parameter search
+        param.train_params['early_stopping'] = {'patience':patience, 'verbose':False, 'delta':0}
+        param.train_params['cyclical'] = {}    # cyclical learning rate
+
+        # coefficient for energy loss and shrodinger loss
+        param.loss_params['anneal_interval'] = 10
+        param.loss_params['anneal_factor'] = np.random.uniform(low=anneal[0], high=anneal[1])
+        param.loss_params['lambda_e0'] = np.random.uniform(low=lambda_e0[0], high=lambda_e0[1])
+        param.loss_params['lambda_s'] = np.random.uniform(low=lambda_s[0], high=lambda_s[1])
+        
+        # for coefficient of the shrodinger loss
+        param.loss_params['noise'] = {}       # noisy coefficient
+        param.loss_params['cyclical'] = {}    # cyclical coefficient
+
+        # loss function for NSE-DNNex-LB (label free)
+        param.loss_params['norm_wf'] = True
+        param.train_params['train_loss'] = [
+            'overlap_loss',
+            'phy_loss', 
+            'energy_loss'
+        ]
+        if mse == True: param.train_params['train_loss'] = param.train_params['train_loss'] + ['mse_loss']
         param.train_params['test_loss'] = [
             'phy_loss', 
             'energy_loss'

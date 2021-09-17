@@ -11,8 +11,12 @@ import scipy.sparse.linalg
 
 # ---------------------- Base Class --------------------------
 class EigenSolver(object):
-    def __init__(self):
+    def __init__(self, smallest_eigen=True):
         self.solvers = {}
+        if smallest_eigen:
+            self.index_of_solution = 0
+        else:
+            self.index_of_solution = -1
         pass
     
     def init_dict(self):
@@ -48,17 +52,19 @@ class EigenSolver(object):
             
             # record
             runtime[name] = elapse
+            val = val[self.index_of_solution]
+            vec = vec[:, self.index_of_solution]
             results[name] = (val, vec)
-            errors[name] = np.mean(np.abs(m @ vec[:, -1] - val[-1] * vec[:, -1]))
-            n=np.linalg.norm(vec[:, -1])
-            
-        return runtime, n, errors
+            errors[name] = np.linalg.norm(m @ vec - val * vec)/np.linalg.norm(m @ vec)
+            n=np.linalg.norm(vec)
+        
+        return runtime, n, errors, results
     
 
 # ======================= Numpy ========================
 class NumpySolvers(EigenSolver):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, smallest_eigen=True):
+        super().__init__(smallest_eigen)
         self.solvers = {
             'numpy_eig': np.linalg.eig,
         }
@@ -89,35 +95,38 @@ class NumpySolvers(EigenSolver):
                 vec = vec[:, index]
             
             # record
+            val = val[self.index_of_solution]
+            vec = vec[:, self.index_of_solution]
             runtime[name] = elapse
             results[name] = (val, vec)
-            errors[name] = np.mean(np.abs(m @ vec[:, -1] - val[-1] * vec[:, -1]))
-            n=np.linalg.norm(vec[:, -1])
+            errors[name] = np.linalg.norm(m @ vec - val * vec)/np.linalg.norm(m @ vec)
+            n=np.linalg.norm(vec)
             
-        return runtime, n, errors
+        return runtime, n, errors, results
     
     
 # ======================= Scipy ========================
 class ScipySolvers(EigenSolver):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, smallest_eigen=True):
+        super().__init__(smallest_eigen)
         self.solvers = {
             'scipy_eig': scipy.linalg.eig,
         }
           
 
 class ScipySparse(EigenSolver):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, smallest_eigen=True):
+        super().__init__(smallest_eigen)
         self.solvers = {
-            'scipy_sparse_eig': scipy.sparse.linalg.eigs,
+            'scipy_sparse_eig': lambda m: scipy.sparse.linalg.eigs(m, k=m.shape[1]),
         }
             
             
-# ======================= PyTorch ========================            
+# ======================= PyTorch ========================      
+# TODO: This function is depricated and is not working properly for complex eigenvectors. Needs to be replaced with torch.linalg.eig()      
 class TorchSolvers(EigenSolver):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, smallest_eigen=True):
+        super().__init__(smallest_eigen)
          
         self.solvers = {
             'torch_cuda': lambda m: torch.eig(m, eigenvectors=True),
@@ -162,14 +171,16 @@ class TorchSolvers(EigenSolver):
             
             # record
             runtime[name] = elapse
-            results[name] = (val, vec)
             if val[-1, 0] != val[-2, 0]: # real
-                val_last = val[-1, 0]
-                vec_last = vec[:,-1]
+                val_last = val[self.index_of_solution, 0]
+                vec_last = vec[:,self.index_of_solution]
             else: # complex conjugate
-                val_last = val[-2, 0] + 1j*val[-2, 1]
-                vec_last = vec[:,-2]+1j*vec[:,-1]
-            errors[name] = np.mean(np.abs(m @ vec_last - val_last * vec_last))
+                if self.index_of_solution == -1:
+                    self.index_of_solution = -2
+                val_last = val[self.index_of_solution, 0] + 1j*val[self.index_of_solution, 1] 
+                vec_last = vec[:,self.index_of_solution]+1j*vec[:,self.index_of_solution+1]
+            errors[name] = np.linalg.norm(m @ vec_last - val_last * vec_last)/np.linalg.norm(m @ vec_last)
             n=np.linalg.norm(vec_last)
+            results[name] = (val_last, vec_last)
             
-        return runtime, n, errors
+        return runtime, n, errors, results

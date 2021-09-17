@@ -1,0 +1,1 @@
+The text files in this folder are just used for the model file name "*.pt". All other information is dummy.

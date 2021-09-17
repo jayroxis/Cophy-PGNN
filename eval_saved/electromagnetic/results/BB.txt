@@ -1,7 +1,7 @@
 {
     'name': 'BB',
     'model_hash': '0x7f00dc5f1c5',
-    'model_path': '../models/0x399c0faca94db3bb.pt',
+    'model_path': '../models/-0x544ff2c934fa5926.pt',
     'log_path': '../logs/log_-0x4adbab2a6c766605.txt',
     'loss_path': '../logs/loss_-0x4adbab2a6c766605.txt',
     'loss_csv': '../results/losses_-0x4adbab2a6c766605.csv',

@@ -21,7 +21,8 @@ class Params(object):
             'hidden_size': 100,
             'depth': 3,               # network depth = 'depth' + 1
             'activation': torch.nn.Tanh,
-            'device': torch.device('cuda:0')
+            'device': torch.device('cuda:0'),
+            'softmax': False
         }
         
         # default training parameters
@@ -37,7 +38,10 @@ class Params(object):
                 'energy_loss'
             ],
             'num_batch': 1,
+            'steplr': 200,
+            'gamma': 0.5,
             'optimizer': torch.optim.Adamax,
+            'lr': 0.002,
             'cyclical': {
                 'base_lr': 0.001, 
                 'max_lr': 0.1, 

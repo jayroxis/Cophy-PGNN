@@ -10,6 +10,7 @@ class DNN(torch.nn.Module):
         output_size,
         depth,
         act=torch.nn.Tanh,
+        softmax=False
     ):
         super(DNN, self).__init__()
         
@@ -21,6 +22,8 @@ class DNN(torch.nn.Module):
             )
             layers.append(('activation_%d' % i, act()))
         layers.append(('output', torch.nn.Linear(hidden_size, output_size)))
+        if softmax == True:
+            layers.append(('softmax', torch.nn.Softmax()))
 
         layerDict = OrderedDict(layers)
         self.layers = torch.nn.Sequential(layerDict)

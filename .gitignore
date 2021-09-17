@@ -1,0 +1,6 @@
+logs/log_*
+logs/loss_*
+*.pyc
+*-checkpoint*
+results/losses_*
+models/*
