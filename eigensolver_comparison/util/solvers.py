@@ -39,9 +39,9 @@ class EigenSolver(object):
             elapse = 0
             
             # solve and record runtime
-            start = time.process_time()             # start
+            start = time.perf_counter()             # start
             result = solver(m)
-            elapse += time.process_time() - start   # end
+            elapse += time.perf_counter() - start   # end
             
             # post-exec sort results
             val, vec = result
@@ -83,9 +83,9 @@ class NumpySolvers(EigenSolver):
             elapse = 0
             
             # solve and record runtime
-            start = time.process_time()             # start
+            start = time.perf_counter()             # start
             result = solver(m)
-            elapse += time.process_time() - start   # end
+            elapse += time.perf_counter() - start   # end
             
             # post-exec sort results
             val, vec = result
@@ -153,10 +153,10 @@ class TorchSolvers(EigenSolver):
             m = torch.tensor(m, device=device, dtype=torch.float64)
             
             # solve and record runtime
-            start = time.process_time()             # start
+            start = time.perf_counter()             # start
             with torch.no_grad():
                 result = solver(m)
-            elapse += time.process_time() - start   # end
+            elapse += time.perf_counter() - start   # end
             
             # post-exec sort results
             val, vec = result
